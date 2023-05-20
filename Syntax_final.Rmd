@@ -1,0 +1,2375 @@
+---
+title: "Starbucks Customer Survey"
+output:
+  word_document:
+    reference_docx: template.docx
+#date: "2023-05-12"
+---
+
+```{r packages, echo=FALSE , include=FALSE}
+# DIRACTARY ###################################################################
+setwd("C:/Users/nasti/OneDrive/Pulpit/Learning/1_R/Project_1_Starbucks Customer Survey/Codes")
+
+# PACKEGES #####################################################################
+options(repos = c(CRAN = "https://cran.r-project.org")) #This code sets up a mirror for CRAN na "https://cran.r-project.org",
+
+install.packages(c("tidyverse", 
+                   "ggplot2", 
+                   "dplyr"))
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+```
+
+# Dataset description \n
+
+The dataset used for this analytics project comprises survey responses from a diverse group of over 100 individuals, capturing valuable insights into their purchasing behavior at Starbucks. The respondents’ income is measured in Malaysian Ringgit (RM). The dataset encompasses 14 distinct variables: demographic information, visitation frequency and timing, expenditure patterns, specific purchases, quality ratings, and additional relevant data points. By leveraging this comprehensive dataset, we aim to conduct in-depth analyses and derive meaningful insights regarding consumer preferences, spending habits, and factors influencing their choices at Starbucks. Such insights can potentially guide strategic decision-making and help optimize marketing campaigns, product offerings, and overall customer satisfaction.
+
+```{r Load data, echo=FALSE , include=FALSE}
+# LOAD DATA ###################################################################
+headers <- c("Date",
+             "Gender",
+             "Age",
+             "Occupation",
+             "Annual income", 
+             "How offten Starback is visited",
+             "Time spent during visit",
+             "Starbucks membership card",
+             "Frequently purchases",
+             "Average expenses per visit",
+             "Quality rating compared to other brands",
+             "Price range rating",
+             "Promotions channels",
+             "Continuing buying")
+
+raw_data <- read.csv("Labeled_data.csv", sep=";",
+                 col.names = headers,
+                 colClasses = c('character',
+                                'factor', 
+                                'factor',
+                                'factor',
+                                'factor',
+                                'factor',
+                                'factor',
+                                'factor',
+                                'factor',
+                                'factor',
+                                'factor',
+                                'factor',
+                                'factor',
+                                'factor'))
+
+
+raw_data$Date <- as.Date(substr(raw_data$Date,1,10), "%Y/%m/%d")
+
+head(raw_data)
+
+```
+
+
+# Dataset cleaning \n
+
+Cleaning the data before analysis is crucial for several reasons. Firstly, it helps ensure the accuracy and reliability of the results. We can prevent misleading or biased conclusions by removing irrelevant or erroneous data points. Secondly, cleaning the data improves data consistency and standardization, allowing for meaningful comparisons and analysis across different variables. Lastly, data cleaning enhances the overall efficiency of the analysis process by reducing noise and improving the signal-to-noise ratio, enabling more accurate and actionable insights to be derived from the data.
+It is necessary to remove the data where the frequency of Starbucks visits is “Never” because including those responses in the analysis would skew the results. Since these respondents have never visited Starbucks, their behavior and preferences cannot provide meaningful insights into loyalty, engagement, or factors influencing visit frequency. By removing this subset of data, we can focus the analysis on respondents who have visited Starbucks and gain more accurate insights regarding their buying behavior and engagement levels.
+
+
+```{r DB cleaning , echo=FALSE , include=FALSE}
+
+data <- subset(raw_data, How.offten.Starback.is.visited!='Never')
+
+```
+
+
+
+# Descriptive statistics \n
+
+## Gender of Starabucks' clients \n
+
+The gender column provides valuable information about the gender distribution among the respondents. This variable enables further exploration of potential gender-based variations in buying behavior, preferences, and perceptions related to Starbucks. Analyzing the gender column may uncover insights into whether there are any gender-specific patterns or tendencies that Starbucks can consider when tailoring its marketing strategies and offerings to different demographic segments.
+
+\newpage
+
+#### Gender \n
+
+```{r  Gender,echo=FALSE,warning=FALSE}
+# data should be data frame for all ggplot sources 
+# Making a Bar Graph of Counts - Use geom_bar() without mapping anything to y. Equivalent to using geom_bar(stat = "bin")
+
+ggplot(data=subset(data,!is.na(Gender)), aes(x = Gender, y = ..count.., fill = Gender )) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Gender[!is.na(data$Gender)])*100),0), "%")), 
+            stat = "count", 
+            position = position_dodge(0.9), 
+            vjust = 0, 
+            color= "black",
+            size= 3) +
+  
+  scale_fill_manual(values=c("#00BFC4", "#F8766D")) +  # set different fill colors for males and females
+  
+  # Customize the plot theme
+   theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_line(color = "gray"),
+    axis.line = element_line(color = "gray"),
+    axis.ticks = element_line(color = "white"),
+    axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+    axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10)
+  )
+
+n <- length(na.omit(data$Gender))
+
+```
+
+The number of responses = `r n`.
+
+
+\newpage 
+
+## Age of clients \n
+
+The age column provides important demographic information about the respondents. The age variable enables the exploration of age-related trends and patterns in buying behavior at Starbucks. 
+
+#### Age \n
+
+```{r  Age,echo=FALSE,warning=FALSE}
+
+# Create a factor variable 'Age' with specified levels
+data$Age <- factor(data$Age, levels=c("Below 20","From 20 to 29","From 30 to 39","40 and above"))
+
+
+ggplot(data=subset(data,!is.na(Age)), aes(x = Age)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Age[!is.na(data$Age)])*100),0), "%")), 
+            stat = "count", vjust = 0, color= "black", size = 3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Age))
+```
+
+The number of responses = `r n`.
+
+Based on the chart provided, it is evident that a significant majority of the participants in the survey belong to the age group of 20 to 29 years. This age range constitutes the largest segment among the participants, indicating a strong representation of young adults in the survey population. This finding suggests that Starbucks may have a particularly strong appeal and customer base among this age demographic, which can be valuable information for targeted marketing strategies and catering to the preferences and needs of this specific age group.
+
+\newpage
+
+#### Age by gender \n
+
+```{r  Age by gender ,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Age)), aes(x = Age, fill = Gender)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Age[!is.na(data$Age)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black", size = 3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Age))
+```
+
+The number of responses = `r n`.
+
+Based on the presented chart, it is clear that a considerable portion of the respondents are 20 to 29 years old. Additionally, the chart indicates that women make up the majority of participants.
+
+\newpage
+
+#### Age by occupation \n
+
+```{r  Age by occupation,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Age)), aes(x = Age, fill = Occupation)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Age[!is.na(data$Age)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black", size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Age))
+
+```
+The number of responses = `r n`.
+
+Over three-quarters of the participants in the study are employed, indicating a significant portion of the respondents are currently working.
+
+\newpage 
+
+## Occupation  \n
+
+This column captures the respondents' current status, indicating whether they are students, employed, self-employed, or housewives. Analyzing this variable can provide insights into the customer composition and help identify potential target groups for Starbucks.
+
+#### Occupation  \n
+
+```{r  Occupation,echo=FALSE,warning=FALSE}
+
+##  Occupation ###############################################################
+
+ggplot(data=subset(data,!is.na(Occupation)), aes(x = Occupation)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar( color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Occupation[!is.na(data$Occupation)])*100),0), "%")), 
+            stat = "count",  vjust = 0, color= "black", size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+        axis.text = element_text(size = 8), 
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Occupation))
+
+```
+
+The number of responses = `r n`.
+
+Among the different employment categories, the data reveals that more than half of the respondents are employed, while a minority of them (14%) consider themselves self-employed. Additionally, approximately one-third of the participants fall under the category of students, indicating a significant presence of students in the dataset.
+
+\newpage 
+
+## Annual income \n
+
+The annual income column provides valuable information about the respondents' financial capacity and can help determine the purchasing power of different customer segments. Analyzing this variable can assist in understanding how income levels may influence spending behavior and preferences at Starbucks.
+
+#### Annual income \n
+
+```{r  Annual income,echo=FALSE,warning=FALSE}
+
+# Create a factor variable with the desired levels and order
+data$Annual.income <- factor(data$Annual.income, levels=c("Less than RM25,000",
+                                                          "RM25,000 - RM50,000",
+                                                          "RM50,000 - RM100,000",
+                                                          "RM100,000 - RM150,000",
+                                                          "More than RM150,000"))
+
+
+ggplot(data=subset(data,!is.na(Annual.income)), aes(x = Annual.income)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Annual.income[!is.na(data$Annual.income)])*100),0), "%")), 
+            stat = "count", vjust = 0, color= "black",size=3) +
+  
+  coord_flip()+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Annual.income))
+```
+
+The number of responses = `r n`.
+
+More than half of the respondents in the dataset (over 50%) have reported an annual income of less than 25,000 RM. This finding indicates a substantial proportion of participants residing within a lower income range. It is worth considering that this income range may be reflective of certain socioeconomic factors or regional contexts. To provide further context, it could be valuable to compare this finding to the average income level in the region or country or to explore any potential implications for consumer behavior or purchasing power within this income segment.
+
+\newpage
+
+#### Annual income by gender \n
+
+```{r  Annual income by gender,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Annual.income)), aes(x = Annual.income, fill = Gender)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Annual.income[!is.na(data$Annual.income)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  coord_flip()+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Annual.income))
+```
+
+The number of responses = `r n`.
+
+From the above chart, it is evident that, in general, females tend to have lower annual incomes compared to males. This observation highlights a potential gender disparity in income levels within the surveyed population. 
+
+\newpage
+
+#### Annual income by age \n
+
+```{r  Annual income by age,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Annual.income)), aes(x = Annual.income, fill = Age)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Annual.income[!is.na(data$Annual.income)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  coord_flip()+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Annual.income))
+```
+
+The number of responses = `r n`.
+
+The above chart indicates that a significant proportion of our participants fall within the age range of 20 to 29 years, and consequently, many of them have annual incomes within the lower range. Notably, there is a correlation between age and income, as higher age groups tend to have higher annual incomes in the majority of cases. This observation suggests a positive association between age and income, implying that as individuals progress in their careers and gain more work experience, their earning potential tends to increase.
+
+\newpage
+
+#### Annual income by occupation \n
+
+```{r  Annual income by occupation,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Annual.income)), aes(x = Annual.income, fill = Occupation)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Annual.income[!is.na(data$Annual.income)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  coord_flip()+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Annual.income))
+```
+
+The number of responses = `r n`.
+
+\newpage 
+
+## Frequency of Starbucks Visits \n
+
+This column reveals the frequency of respondents' visits to Starbucks, offering insights into their loyalty and engagement levels. Analyzing this variable can help identify frequent visitors or potential opportunities to increase customer retention by understanding the factors that drive visit frequency.
+
+#### Frequency \n
+
+```{r  Frequency,echo=FALSE,warning=FALSE}
+
+# Create a factor variable with the desired levels and order
+data$How.offten.Starback.is.visited <- factor(data$How.offten.Starback.is.visited, levels=c("Never","Rarely","Daily","Weekly","Monthly"))
+
+
+
+ggplot(data=subset(data,!is.na(How.offten.Starback.is.visited)), aes(x = How.offten.Starback.is.visited)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$How.offten.Starback.is.visited[!is.na(data$How.offten.Starback.is.visited)])*100),0), "%")), 
+            stat = "count", vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+
+n <- length(na.omit(data$How.offten.Starback.is.visited))
+```
+The number of responses = `r n`.
+
+It is worth noting that the majority of respondents (more than two-thirds) visit Starbucks rarely, indicating that they do not frequent the establishment on a regular basis. Conversely, only a small percentage of clients visit Starbucks daily or at least on a week. This finding suggests that Starbucks may primarily attract occasional customers rather than those who visit with higher frequency. Understanding the visitation patterns can help inform strategic decisions regarding customer engagement, loyalty programs, and promotional initiatives to increase visit frequency and enhance customer retention.
+
+\newpage
+
+#### Frequency by gender\n
+
+```{r  Frequency by gender,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(How.offten.Starback.is.visited)), aes(x = How.offten.Starback.is.visited, fill = Gender)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$How.offten.Starback.is.visited[!is.na(data$How.offten.Starback.is.visited)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+n <- length(na.omit(data$How.offten.Starback.is.visited))
+
+```
+The number of responses = `r n`.
+
+#### Frequency by age\n
+
+```{r  Frequency by age, echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(How.offten.Starback.is.visited)), aes(x = How.offten.Starback.is.visited, fill = Age)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$How.offten.Starback.is.visited[!is.na(data$How.offten.Starback.is.visited)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3 ) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+n <- length(na.omit(data$How.offten.Starback.is.visited))
+
+```
+
+The number of responses = `r n`.
+
+\newpage
+
+#### Frequency by occupation \n
+
+```{r  requency by occupation,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(How.offten.Starback.is.visited)), aes(x = How.offten.Starback.is.visited, fill = Occupation)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$How.offten.Starback.is.visited[!is.na(data$How.offten.Starback.is.visited)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black", size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+n <- length(na.omit(data$How.offten.Starback.is.visited))
+
+```
+
+The number of responses = `r n`.
+
+
+#### Frequency by annual income \n
+
+```{r  Frequency by annual income ,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(How.offten.Starback.is.visited)), aes(x = How.offten.Starback.is.visited, fill = Annual.income)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$How.offten.Starback.is.visited[!is.na(data$How.offten.Starback.is.visited)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+   labs(fill = "Annual income") +  # Specify the legend title here
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+        axis.text = element_text(size = 8), 
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+n <- length(na.omit(data$How.offten.Starback.is.visited))
+
+```
+
+The number of responses = `r n`.
+
+
+
+## Time spent during a visit in Starbucks \n
+
+This column captures the average duration of a respondent's visit to Starbucks. Analyzing this variable can provide insights into customer engagement and the level of time spent at Starbucks, which can influence factors such as purchases, interactions, and overall customer experience.
+
+#### Time spent during visit \n
+
+```{r  Time.spent.during.visit,echo=FALSE,warning=FALSE}
+
+# Create a factor variable with the desired levels and order
+data$Time.spent.during.visit <- factor(data$Time.spent.during.visit, 
+                                              levels=c('More than 3 hours',
+                                                       'Between 2 hours to 3 hours',
+                                                       'Between 1 hour to 2 hours',
+                                                       'Between 30 minutes to 1 hour',
+                                                       'Below 30 minutes'
+                                              ))
+
+
+ggplot(data=subset(data,!is.na(Time.spent.during.visit)), aes(x = Time.spent.during.visit)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Time.spent.during.visit[!is.na(data$Time.spent.during.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Time.spent.during.visit))
+```
+
+The number of responses = `r n`.
+
+A significant majority of participants (57%) spend up to 30 minutes in Starbucks, indicating that most visits are relatively short. Conversely, only a small proportion of participants (14%) spend more than 1 hour in Starbucks. This finding suggests that the majority of customers prefer quick visits or have limited time available for their Starbucks experience. Understanding the average duration of customer visits can be valuable for optimizing store layouts, seating arrangements, and service efficiency to accommodate customers' time preferences and enhance their overall experience.
+
+\newpage
+
+#### Time spent during the visit by gender \n
+
+```{r  Time spent during the visit by gender,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Time.spent.during.visit)), aes(x = Time.spent.during.visit, fill = Gender)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Time.spent.during.visit[!is.na(data$Time.spent.during.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size =3) +
+  
+  
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Time.spent.during.visit))
+```
+
+The number of responses = `r n`.
+
+
+#### Time spent during visit by age \n
+
+```{r  Time spent during visit by age,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Time.spent.during.visit)), aes(x = Time.spent.during.visit, fill = Age)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Time.spent.during.visit[!is.na(data$Time.spent.during.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.x = element_blank(),
+        axis.text = element_text(size = 8), 
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Time.spent.during.visit))
+```
+
+The number of responses = `r n`.
+
+#### Time spent during visit by occupation \n
+
+```{r  Time spent during visit by occupation,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Time.spent.during.visit)), aes(x = Time.spent.during.visit, fill = Occupation)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Time.spent.during.visit[!is.na(data$Time.spent.during.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Time.spent.during.visit))
+```
+
+The number of responses = `r n`.
+
+#### Time spent during visit by annual income \n
+
+```{r  Time spent during visit by annual income ,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Time.spent.during.visit)), aes(x = Time.spent.during.visit, fill = Annual.income)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Time.spent.during.visit[!is.na(data$Time.spent.during.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  
+   labs(fill = "Annual income") +  # Specify the legend title here
+  
+
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Time.spent.during.visit))
+```
+
+The number of responses = `r n`.
+
+
+#### Time spent during visit by frequency of visits \n
+
+```{r   Time spent during visit by frequency of visits, echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Time.spent.during.visit)), aes(x = Time.spent.during.visit, fill = How.offten.Starback.is.visited)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Time.spent.during.visit[!is.na(data$Time.spent.during.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  
+   labs(fill = "Frequency of visits") +  # Specify the legend title here
+  
+
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Time.spent.during.visit))
+```
+
+The number of responses = `r n`.
+
+
+\newpage 
+
+## Starbucks membership card \n
+
+This column indicates whether respondents possess a membership card with Starbucks. Analyzing this variable can help determine the proportion of customers who are enrolled in Starbucks' loyalty program, allowing for insights into the impact of membership benefits on customer behavior and loyalty.
+
+#### Starbucks membership card \n
+
+```{r  Starbucks.membership.card,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Starbucks.membership.card)), aes(x = Starbucks.membership.card)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Starbucks.membership.card[!is.na(data$Starbucks.membership.card)])*100),0), "%")), 
+            stat = "count", vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Starbucks.membership.card))
+```
+
+The number of responses = `r n`.
+
+\newpage
+
+#### Starbucks membership card by gender \n
+
+```{r  Starbucks membership card by gender , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Starbucks.membership.card)), aes(x = Starbucks.membership.card, fill = Gender)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Starbucks.membership.card[!is.na(data$Starbucks.membership.card)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text = element_text(size = 8), 
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Starbucks.membership.card))
+```
+
+The number of responses = `r n`.
+
+#### Starbucks membership card by age \n
+
+```{r  Starbucks membership card by age , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Starbucks.membership.card)), aes(x = Starbucks.membership.card, fill = Age)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Starbucks.membership.card[!is.na(data$Starbucks.membership.card)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Starbucks.membership.card))
+```
+
+The number of responses = `r n`.
+
+
+#### Starbucks membership card by occupation \n
+
+```{r  Starbucks membership card by occupation , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Starbucks.membership.card)), aes(x = Starbucks.membership.card, fill = Occupation)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Starbucks.membership.card[!is.na(data$Starbucks.membership.card)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Starbucks.membership.card))
+```
+
+The number of responses = `r n`.
+
+#### Starbucks membership card by annual income \n
+
+```{r  Starbucks membership card by annual income , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Starbucks.membership.card)), aes(x = Starbucks.membership.card, fill = Annual.income)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Starbucks.membership.card[!is.na(data$Starbucks.membership.card)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  labs(fill = "Annual income") +  # Specify the legend title here
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Starbucks.membership.card))
+```
+
+The number of responses = `r n`.
+
+
+#### Starbucks membership card by frequency of visits \n
+
+```{r  Starbucks membership card by frequency of visits , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Starbucks.membership.card)), aes(x = Starbucks.membership.card, fill = How.offten.Starback.is.visited)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Starbucks.membership.card[!is.na(data$Starbucks.membership.card)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  labs(fill = "Frequency of visits") +  # Specify the legend title here
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Starbucks.membership.card))
+```
+
+The number of responses = `r n`.
+
+
+\newpage 
+
+## Frequently purchases in Starbucks\n
+
+This column records the respondents' most common purchases at Starbucks. Analyzing this variable can reveal popular products or categories, enabling Starbucks to understand customer preferences and tailor their offerings to meet demand more effectively.
+
+#### Frequently purchases\n
+
+```{r Frequently purchases,echo=FALSE,warning=FALSE}
+
+data <- data %>%
+  mutate(Frequently.purchases = case_when(
+    Frequently.purchases == "cake " ~ "Cake",
+    TRUE ~ Frequently.purchases
+  ))
+
+
+ggplot(data=subset(data,!is.na(Frequently.purchases)), aes(x = Frequently.purchases)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar( color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Frequently.purchases[!is.na(data$Frequently.purchases)])*100),0), "%")), 
+            stat = "count", vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Frequently.purchases))
+```
+
+The number of responses = `r n`.
+
+The analysis reveals that the most frequently purchased product at Starbucks, preferred by a significant majority of participants, is coffee. This finding highlights the popularity of coffee among Starbucks customers and emphasizes its position as a preferred choice during visits. Additionally, the second most common product purchased by participants is cold drinks. Understanding the preferred products can inform inventory management, marketing strategies, and menu offerings to cater to customers' preferences and enhance their overall satisfaction.
+
+\newpage
+
+#### Frequently purchases by gender \n
+
+```{r Frequently purchases by gender,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Frequently.purchases)), aes(x = Frequently.purchases, fill = Gender)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Frequently.purchases[!is.na(data$Frequently.purchases)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.x = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Frequently.purchases))
+```
+
+The number of responses = `r n`.
+
+
+#### Frequently purchases by age \n
+
+```{r Frequently purchases by age,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Frequently.purchases)), aes(x = Frequently.purchases, fill = Age)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Frequently.purchases[!is.na(data$Frequently.purchases)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.x = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Frequently.purchases))
+```
+
+The number of responses = `r n`.
+
+
+#### Frequently purchases by occupation \n
+
+```{r Frequently purchases by occupation,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Frequently.purchases)), aes(x = Frequently.purchases, fill = Occupation)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Frequently.purchases[!is.na(data$Frequently.purchases)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.x = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Frequently.purchases))
+```
+
+The number of responses = `r n`.
+
+#### Frequently purchases by frequency of visits \n
+
+```{r Frequently purchases by frequency of visits,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Frequently.purchases)), aes(x = Frequently.purchases, fill = How.offten.Starback.is.visited)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Frequently.purchases[!is.na(data$Frequently.purchases)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  coord_flip()+
+  
+  labs(fill="Frequency of visits")+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.x = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Frequently.purchases))
+```
+
+The number of responses = `r n`.
+
+
+#### Frequently purchases by time spent during visits \n
+
+```{r Frequently purchases by time spent during visits,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Frequently.purchases)), aes(x = Frequently.purchases, fill = Time.spent.during.visit)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Frequently.purchases[!is.na(data$Frequently.purchases)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  coord_flip()+
+
+  
+  labs(fill="Time spent during visits")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.text.x = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Frequently.purchases))
+```
+
+The number of responses = `r n`.
+
+\newpage 
+
+
+## Average expenses per visit in Starbucks \n
+
+This column quantifies the average amount spent by respondents during each visit to Starbucks. Analyzing this variable can provide insights into spending patterns, allowing Starbucks to evaluate the effectiveness of pricing strategies and potentially identify opportunities for upselling or cross-selling.
+
+#### Average expenses per visit \n
+
+```{r Average expenses per visit,echo=FALSE,warning=FALSE}
+
+# also helps to skip NA values
+data$Average.expenses.per.visit<- factor(data$Average.expenses.per.visit, 
+                                             levels=c( 'Zero', 'Less than RM20','Around RM20 - RM40','More than RM40' ))
+
+
+ggplot(data=subset(data,!is.na(Average.expenses.per.visit)), aes(x = Average.expenses.per.visit)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Average.expenses.per.visit[!is.na(data$Average.expenses.per.visit)])*100),0), "%")), 
+            stat = "count", vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),
+    legend.text = element_text(size = 8, hjust = 0),
+    legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Average.expenses.per.visit))
+```
+
+The number of responses = `r n`.
+
+The analysis indicates that nearly half of the participants (approximately 50%) spend either zero or less than 20 RM on average during their visits to Starbucks. This finding suggests that a significant portion of customers may opt for lower-priced items or have limited spending during their Starbucks visits. Understanding the distribution of spending patterns can help in optimizing pricing strategies, promotional offers, and product assortment to cater to customers with different budget preferences and potentially encourage higher spending among certain segments.
+
+\newpage
+
+#### Average expenses per visit by gender\n
+
+```{r Average expenses per visit by gender,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Average.expenses.per.visit)), aes(x = Average.expenses.per.visit, fill = Gender)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Average.expenses.per.visit[!is.na(data$Average.expenses.per.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Average.expenses.per.visit))
+```
+
+The number of responses = `r n`.
+
+
+#### Average expenses per visit by age \n
+
+```{r Average expenses per visit by age,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Average.expenses.per.visit)), aes(x = Average.expenses.per.visit, fill = Age )) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Average.expenses.per.visit[!is.na(data$Average.expenses.per.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Average.expenses.per.visit))
+```
+
+The number of responses = `r n`.
+
+
+#### Average expenses per visit by occupation \n
+
+```{r Average expenses per visit by occupation ,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Average.expenses.per.visit)), aes(x = Average.expenses.per.visit, fill = Occupation)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Average.expenses.per.visit[!is.na(data$Average.expenses.per.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Average.expenses.per.visit))
+```
+
+The number of responses = `r n`.
+
+
+#### Average expenses per visit by annual income \n
+
+```{r Average expenses per visit by annual income, echo=FALSE, warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Average.expenses.per.visit)), aes(x = Average.expenses.per.visit, fill = Annual.income)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Average.expenses.per.visit[!is.na(data$Average.expenses.per.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black", size=3) +
+  
+  labs(fill="Annual income")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+        axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),
+        legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10)
+        )
+
+
+n <- length(na.omit(data$Average.expenses.per.visit))
+
+```
+
+The number of responses = `r n`.
+
+
+#### Average expenses per visit by frequency of visits \n
+
+```{r Average expenses per visit by frequency of visits ,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Average.expenses.per.visit)), aes(x = Average.expenses.per.visit, fill = How.offten.Starback.is.visited)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Average.expenses.per.visit[!is.na(data$Average.expenses.per.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  labs(fill="Frequency of visits")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Average.expenses.per.visit))
+```
+
+The number of responses = `r n`.
+
+
+#### Average expenses per visit by time \n
+
+```{r Average expenses per visit by time ,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Average.expenses.per.visit)), aes(x = Average.expenses.per.visit, fill = Time.spent.during.visit)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Average.expenses.per.visit[!is.na(data$Average.expenses.per.visit)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  labs(fill="Time spent during visit")+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Average.expenses.per.visit))
+```
+
+The number of responses = `r n`.
+
+
+
+## Quality rating compared to other brands \n
+
+This column captures respondents' subjective ratings of Starbucks' quality in comparison to other competing brands. Analyzing this variable can shed light on Starbucks' quality relative to competitors, helping to inform strategies for enhancing product quality and differentiation.
+
+#### Quality rating \n
+
+```{r Quality rating,echo=FALSE,warning=FALSE}
+
+# also helps to skip NA values
+data$Quality.rating.compared.to.other.brands<- factor(data$Quality.rating.compared.to.other.brands, 
+                                             levels=c('1',
+                                                      '2',
+                                                      '3',
+                                                      '4',
+                                                      '5'
+                                             ))
+
+
+ggplot(data=subset(data,!is.na(Quality.rating.compared.to.other.brands)), aes(x = Quality.rating.compared.to.other.brands)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Quality.rating.compared.to.other.brands[!is.na(data$Quality.rating.compared.to.other.brands)])*100),0), "%")), 
+            stat = "count", vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Quality.rating.compared.to.other.brands))
+```
+
+The number of responses = `r n`.
+
+The 1-5 scale for quality rating is a standardized measurement used to assess the participants' perception of the quality of Starbucks in comparison to other brands. Here is a general interpretation of the scale:
+
+1: Very Low Quality - Participants perceive Starbucks to have significantly lower quality compared to other brands.
+
+2: Low Quality - Participants consider Starbucks to have lower quality compared to other brands.
+
+3: Average Quality - Participants perceive Starbucks to have a similar quality as other brands.
+
+4: High Quality - Participants consider Starbucks to have a higher quality compared to other brands.
+
+5: Very High Quality - Participants perceive Starbucks to have a significantly higher quality compared to other brands.
+
+The analysis reveals that nearly half of the participants rate Starbucks' quality higher than that of other brands. This finding indicates a positive perception of Starbucks' quality among a significant proportion of the participants. 
+
+\newpage
+
+#### Quality rating by gender \n
+
+```{r Quality rating by gender ,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Quality.rating.compared.to.other.brands)), aes(x = Quality.rating.compared.to.other.brands, fill = Gender)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Quality.rating.compared.to.other.brands[!is.na(data$Quality.rating.compared.to.other.brands)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Quality.rating.compared.to.other.brands))
+```
+
+The number of responses = `r n`.
+
+
+#### Quality rating by age \n
+
+```{r Quality rating by age ,echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Quality.rating.compared.to.other.brands)), aes(x = Quality.rating.compared.to.other.brands, fill = Age)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Quality.rating.compared.to.other.brands[!is.na(data$Quality.rating.compared.to.other.brands)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Quality.rating.compared.to.other.brands))
+```
+
+The number of responses = `r n`.
+
+
+#### Quality rating by occupation \n
+
+```{r Quality rating by occupation , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Quality.rating.compared.to.other.brands)), aes(x = Quality.rating.compared.to.other.brands, fill = Occupation)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Quality.rating.compared.to.other.brands[!is.na(data$Quality.rating.compared.to.other.brands)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.text.y = element_blank(),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Quality.rating.compared.to.other.brands))
+```
+
+The number of responses = `r n`.
+
+
+#### Quality rating by annual income \n
+
+```{r Quality rating by annual income  , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Quality.rating.compared.to.other.brands)), aes(x = Quality.rating.compared.to.other.brands, fill = Annual.income)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Quality.rating.compared.to.other.brands[!is.na(data$Quality.rating.compared.to.other.brands)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+    
+  labs(fill="Annual income")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Quality.rating.compared.to.other.brands))
+```
+
+The number of responses = `r n`.
+
+
+#### Quality rating by frequency of visits \n
+
+```{r Quality rating by frequency of visits , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Quality.rating.compared.to.other.brands)), aes(x = Quality.rating.compared.to.other.brands, fill = How.offten.Starback.is.visited)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Quality.rating.compared.to.other.brands[!is.na(data$Quality.rating.compared.to.other.brands)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+    
+  labs(fill="Frequency of visit")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Quality.rating.compared.to.other.brands))
+```
+
+The number of responses = `r n`.
+
+
+#### Quality rating by frequent purchases \n
+
+```{r Quality rating by  frequent purchases , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Quality.rating.compared.to.other.brands)), aes(x = Quality.rating.compared.to.other.brands, fill = Frequently.purchases)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Quality.rating.compared.to.other.brands[!is.na(data$Quality.rating.compared.to.other.brands)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+    
+  labs(fill="Frequent purchases")+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Quality.rating.compared.to.other.brands))
+```
+
+The number of responses = `r n`.
+
+
+\newpage
+
+#### Quality rating by average expenses per visit \n
+
+```{r Quality rating by average expenses per visit , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Quality.rating.compared.to.other.brands)), aes(x = Quality.rating.compared.to.other.brands, fill = Average.expenses.per.visit)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Quality.rating.compared.to.other.brands[!is.na(data$Quality.rating.compared.to.other.brands)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+      
+  labs(fill="Average expences per visit")+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Quality.rating.compared.to.other.brands))
+```
+
+The number of responses = `r n`.
+
+\newpage 
+
+## Price range rating in Starbucks \n
+
+This column captures respondents' perceptions of Starbucks' price range. Analyzing this variable can provide insights into how customers perceive Starbucks' pricing and whether it aligns with their expectations and perceived value. This information can guide pricing strategies and promotions.
+
+#### Price range rating \n
+
+```{r Price range rating, echo=FALSE,warning=FALSE}
+ 
+data$Price.range.rating <- factor(data$Price.range.rating, 
+                                             levels=c('1',
+                                                      '2',
+                                                      '3',
+                                                      '4',
+                                                      '5'))
+
+
+ggplot(data=subset(data,!is.na(Price.range.rating)), aes(x = Price.range.rating)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar( color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Price.range.rating[!is.na(data$Price.range.rating)])*100),0), "%")), 
+            stat = "count", vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Price.range.rating))
+
+```
+
+The number of responses = `r n`.
+
+The 1-5 scale for price rating is a standardized measurement used to assess the participants' perception of the price of Starbucks products in comparison to other brands. Here is a general interpretation of the scale:
+
+1: Very Overpriced - Participants perceive Starbucks products to be significantly more expensive compared to other brands.
+
+2: Overpriced - Participants consider Starbucks products to be more expensive compared to other brands.
+
+3: Average Price - Participants perceive Starbucks products to have a similar price range as other brands.
+
+4: Reasonably Priced - Participants consider Starbucks products to be priced competitively compared to other brands.
+
+5: Very Reasonably Priced - Participants perceive Starbucks products to be significantly more affordable compared to other brands.
+
+\newpage
+
+#### Price range rating by gender \n
+
+```{r Price range rating by gender , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Price.range.rating)), aes(x = Price.range.rating, fill = Gender)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Price.range.rating[!is.na(data$Price.range.rating)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Price.range.rating))
+
+```
+
+The number of responses = `r n`.
+
+
+#### Price range rating by age \n
+
+```{r Price range rating by age , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Price.range.rating)), aes(x = Price.range.rating, fill = Age)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Price.range.rating[!is.na(data$Price.range.rating)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Price.range.rating))
+
+```
+
+The number of responses = `r n`.
+
+
+#### Price range rating by occupation \n
+
+```{r Price range rating by occupation , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Price.range.rating)), aes(x = Price.range.rating, fill = Occupation)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Price.range.rating[!is.na(data$Price.range.rating)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Price.range.rating))
+
+```
+
+The number of responses = `r n`.
+
+#### Price range rating by annual income \n
+
+```{r Price range rating by annual income , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Price.range.rating)), aes(x = Price.range.rating, fill = Annual.income)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Price.range.rating[!is.na(data$Price.range.rating)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+      
+  labs(fill="Annual income")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Price.range.rating))
+
+```
+
+The number of responses = `r n`.
+
+
+#### Price range rating by frequency of visits \n
+
+```{r Price range rating by frequency of visits , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Price.range.rating)), aes(x = Price.range.rating, fill = How.offten.Starback.is.visited)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Price.range.rating[!is.na(data$Price.range.rating)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+      
+  labs(fill="Frequency of visits")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Price.range.rating))
+
+```
+
+The number of responses = `r n`.
+
+#### Price range rating by frequent purchases \n
+
+```{r Price range rating by frequent purchases , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Price.range.rating)), aes(x = Price.range.rating, fill = Frequently.purchases)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Price.range.rating[!is.na(data$Price.range.rating)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+      
+  labs(fill="Frequent purchases")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Price.range.rating))
+
+```
+
+The number of responses = `r n`.
+
+#### Price range rating by average expenses per visit \n
+
+```{r Price range rating by average expenses per visit , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Price.range.rating)), aes(x = Price.range.rating, fill = Average.expenses.per.visit )) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Price.range.rating[!is.na(data$Price.range.rating)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+      
+  labs(fill="Average expenses per visit")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Price.range.rating))
+
+```
+
+The number of responses = `r n`.
+
+
+#### Price range rating by quality rating \n
+
+```{r Price range rating by quality rating , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Price.range.rating)), aes(x = Price.range.rating, fill = Quality.rating.compared.to.other.brands )) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Price.range.rating[!is.na(data$Price.range.rating)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+       
+  labs(fill="Quality rating")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Price.range.rating))
+
+```
+
+The number of responses = `r n`.
+
+
+## Promotions channels in Starbucks \n
+
+This column records the various channels through which respondents learn about Starbucks' promotions. Analyzing this variable can help identify the most effective marketing channels and communication methods for promoting Starbucks' promotions and increasing customer awareness and engagement.
+
+#### Promotions channels \n
+
+```{r Promotions chanells, echo=FALSE,warning=FALSE}
+ 
+data$Promotions.channels <- factor(data$Promotions.channels, levels=c('In Store displays',
+                                                                      'Through friends and word of mouth',
+                                                                      'Social Media',
+                                                                      'Emails',
+                                                                      'Application offer',
+                                                                      'Billboards',
+                                                                      'Never hear'
+                                                                      
+  
+))
+
+
+ggplot(data=subset(data,!is.na(Promotions.channels)), aes(x = Promotions.channels)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar( color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Promotions.channels[!is.na(data$Promotions.channels)])*100),0), "%")), 
+            stat = "count", vjust = 0, color= "black",size=3) +
+  
+  
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.x = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Promotions.channels))
+```
+
+The number of responses = `r n`.
+
+According to the participants, social media is widely recognized as the most common source of awareness regarding Starbucks. This finding suggests that social media platforms significantly disseminate information, promotions, and updates about Starbucks among the target audience. Understanding the influence of social media in creating awareness can help Starbucks optimize its social media marketing strategies and engage with customers effectively on these platforms.
+
+\newpage
+
+#### Promotions channels by gender \n
+
+```{r Promotions chanells by gender, echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Promotions.channels)), aes(x = Promotions.channels, fill = Gender)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge",  color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Promotions.channels[!is.na(data$Promotions.channels)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.x = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Promotions.channels))
+```
+
+The number of responses = `r n`.
+
+
+#### Promotions channels by age \n
+
+```{r Promotions chanells by age , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Promotions.channels)), aes(x = Promotions.channels, fill = Age)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge",  color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Promotions.channels[!is.na(data$Promotions.channels)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+  
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.x = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Promotions.channels))
+```
+
+The number of responses = `r n`.
+
+#### Promotions channels by annual income \n
+
+```{r Promotions channels by annual income , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Promotions.channels)), aes(x = Promotions.channels, fill = Annual.income )) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge",  color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Promotions.channels[!is.na(data$Promotions.channels)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+  
+       
+  labs(fill="Annual income")+
+
+
+  coord_flip()+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.x = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Promotions.channels))
+```
+
+The number of responses = `r n`.
+
+\newpage 
+
+## Continuing buying in Starbucks \n
+
+This column indicates the respondents' intention to continue purchasing from Starbucks in the future. Analyzing this variable can provide insights into customer loyalty and satisfaction levels, allowing Starbucks to identify areas for improvement and strategies to retain customers and foster long-term loyalty.
+
+#### Continuing buying \n
+
+```{r Continuing buying , echo=FALSE,warning=FALSE}
+
+
+data$Continuing.buying <- factor(data$Continuing.buying, levels = c('Yes', 'No'))
+
+ggplot(data = subset(data, !is.na(Continuing.buying)), aes(x = Continuing.buying)) +
+  geom_bar(color = "black") +
+   geom_text(aes(label = paste0(round((..count../length(data$Continuing.buying[!is.na(data$Continuing.buying)])*100),0), "%")), 
+             stat = "count", vjust = 0, color = "black", size = 3) +
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+        axis.text = element_text(size = 8),
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+
+
+n <- length(na.omit(data$Continuing.buying))
+
+```
+
+The number of responses = `r n`.
+
+Based on the survey data, it can be concluded that a significant portion of the participants have indicated their intention to continue visiting Starbucks. This finding highlights the positive customer loyalty and satisfaction associated with the brand. 
+
+\newpage
+
+#### Continuing buying by frequency of visit \n
+
+```{r Continuing buying by frequency of visit , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Continuing.buying)), aes(x = Continuing.buying, fill = How.offten.Starback.is.visited )) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Continuing.buying[!is.na(data$Continuing.buying)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+       
+  labs(fill="Frequency of visits")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+n <- length(na.omit(data$Continuing.buying))
+
+```
+
+The number of responses = `r n`.
+
+#### Continuing buying by average expenses per visit \n
+
+```{r Continuing buying by average expenses per visit , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Continuing.buying)), aes(x = Continuing.buying, fill = Average.expenses.per.visit )) +  
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Continuing.buying[!is.na(data$Continuing.buying)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+       
+  labs(fill="Average expenses per visit")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+n <- length(na.omit(data$Continuing.buying))
+
+```
+
+The number of responses = `r n`.
+
+#### Continuing buying by quality rating \n
+
+```{r Continuing buying by quality rating , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Continuing.buying)), aes(x = Continuing.buying, fill = Quality.rating.compared.to.other.brands )) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Continuing.buying[!is.na(data$Continuing.buying)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+       
+  labs(fill="Quality rating")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+    axis.text = element_text(size = 8),  # Set the font size to 8
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+n <- length(na.omit(data$Continuing.buying))
+
+```
+
+The number of responses = `r n`.
+
+
+#### Continuing buying by price range rating \n
+
+```{r Continuing buying by price range rating , echo=FALSE,warning=FALSE}
+
+ggplot(data=subset(data,!is.na(Continuing.buying)), aes(x = Continuing.buying, fill = Price.range.rating)) +  
+
+  # Create bars with dodged position and black border
+  geom_bar(position = "dodge", color = "black") +                             
+  
+  # Add text labels to show the percentage of each group
+  geom_text(aes(label = paste0(round((..count../length(data$Continuing.buying[!is.na(data$Continuing.buying)])*100),0), "%")), 
+            stat = "count", position = position_dodge(0.9), vjust = 0, color= "black",size=3) +
+       
+  labs(fill="Price range rating")+
+
+
+  # Customize the plot theme
+  theme(panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(color = "gray"),
+        axis.line = element_line(color = "gray"),
+        axis.ticks = element_line(color = "white"),
+        axis.text.y = element_blank(),
+        axis.text = element_text(size = 8), 
+        axis.title = element_blank(),legend.text = element_text(size = 8, hjust = 0),legend.title = element_text(size = 10))
+
+n <- length(na.omit(data$Continuing.buying))
+
+```
+
+The number of responses = `r n`.
+
+Participants who rated the price of Starbucks on par with other companies are more likely to continue buying from Starbucks, while those who perceived the price as very overpriced or overpriced do not plan to continue their purchases.
+These findings emphasize Starbucks's importance in carefully managing its pricing strategy to align with customer expectations and market competitors. Balancing affordability and perceived value can help enhance customer satisfaction and maintain customer loyalty over time.
