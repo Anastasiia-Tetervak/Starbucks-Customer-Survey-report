@@ -1,6 +1,6 @@
 # Starbucks Customer Survey Analysis
 
-This repository contains an analysis of the Starbucks Customer Survey dataset using R programming language. The purpose of this project is to learn and showcase various data manipulation and visualization techniques, including file handling, working with data frames, subsetting, data transformation using `mutate`, and data visualization using `ggplot`.
+This repository contains an analysis of the Starbucks Customer Survey dataset using R programming language. The purpose of this project is to learn and showcase various data manipulation and visualization techniques, including file handling, working with data frames, subsetting, data transformation using `mutate`, and data visualization using `ggplot2`.
 
 ## Dataset Description
 
